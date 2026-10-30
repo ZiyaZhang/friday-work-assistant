@@ -1,0 +1,73 @@
+# Friday 的 dsh profile 补丁层：叠在 @deepseek-ai/dsh-base + @deepseek-ai/dsh-acp-app 之上。
+# 由 friday 启动时同步到 $DSH_HOME/profiles/friday/cordis.patch.yml。
+# 语法：顶层数组；`- id: <plugin id>` 覆盖已有插件的 config / disabled；`- insert:` 追加插件。
+
+# 1. 人设：Friday 是飞书里的团队 agent，不是通用 coding agent。
+- id: system-prompt
+  config:
+    personaPrefix: >-
+      You are Friday, a team agent that works inside Feishu (飞书) group chats, powered by the {{model}} model.
+      Colleagues @-mention you with tasks. You read chat history, documents and code through tools,
+      then answer in Chinese with sources. Persistent instructions live in AGENTS.md of the workspace.
+      Hard rules: never fabricate tool results — only state what tools actually returned, and say so plainly
+      when a call failed or found nothing; lead with the conclusion in 1–3 sentences, then the evidence;
+      keep it factual and short, no small talk, no narrating your own process.
+    personaSuffix: Your working directory is {{cwd}}. Treat `repos/` inside it as read-only reference code.
+
+# 2. 模型：默认 DeepSeek 官方；要切 OpenAI 兼容网关时改环境变量 FRIDAY_MODEL_PROVIDER / FRIDAY_MODEL。
+- id: agent-default-model
+  config:
+    provider: !!js process.env.FRIDAY_MODEL_PROVIDER ?? 'deepseek-official'
+    model: !!js process.env.FRIDAY_MODEL ?? 'deepseek-flash'
+# ACP 的显式默认保留已安装运行时的原默认；旧 FRIDAY_MODEL 偏好不在升级时自动激活。
+- id: acp
+  config:
+    provider: !!js process.env.FRIDAY_ACP_MODEL_PROVIDER ?? 'deepseek-official'
+    model: !!js process.env.FRIDAY_ACP_MODEL ?? 'deepseek-v4-flash'
+#    DeepSeek 端点由环境变量 DEEPSEEK_BASE_URL 决定（dsh 的 llm-deepseek 原生支持），根要带 /anthropic；不设则走公网官方 API。
+
+#    模型目录（advisory catalog）：dsh 自带的那份只认 deepseek-flash 和 deepseek-v4-pro，
+#    **我们实际在跑的 deepseek-v4-flash 根本不在里面**。不在目录里 = inputModalities 缺省成 ["text"]，
+#    于是 read_image 在 assertImageCapableRoute 处直接拒绝（"does not declare image input"），
+#    而模型只能把这句转述成「我没有支持图片输入的模型」——人发来的截图就这么读不了。
+#    实测同一个端点用同一个模型名发图是能读的（Anthropic messages 的 image block，返回正确答案），
+#    所以这里不是模型不行，是目录没说实话。目录本来就是 deployment 可替换的，我们把跑着的那个声明清楚。
+#    注意：models 是整体替换而不是合并，所以自带的两个也要一并写回来，别把它们写没了。
+- id: llm-deepseek
+  config:
+    models:
+      - id: deepseek-v4-flash
+        name: DeepSeek-V4-Flash
+        contextWindow: 1000000
+        inputModalities: [text, image]
+      - id: deepseek-flash
+        name: DeepSeek-V41-Flash
+        contextWindow: 1000000
+        inputModalities: [text, image]
+        systemPromptUpdate: in-history
+      - id: deepseek-v4-pro
+        name: DeepSeek-V4-Pro
+        description: >-
+          Stronger agentic coding, knowledge, and difficult reasoning; suited to complex or
+          quality-critical tasks at higher cost.
+        contextWindow: 1000000
+
+# 3. 不把会话遥测发给 DeepSeek（Friday 处理的是群聊内容）。
+- id: session-telemetry-otel
+  disabled: true
+
+# 4. 审批：保持 ask，由 Friday 网关通过 ACP session/request_permission 作答
+#    （safe 策略下读类工具自动放行，沙箱升级请求发飞书卡片让人点）。
+#    沙箱模式由 DSH_PERMISSION_MODE 环境变量控制（Friday 默认 workspace-write）。
+
+# 5. 会话标题：不用模型生成（省一次调用），用首条 prompt 截断即可。
+- id: session-title-llm
+  disabled: true
+
+# 6. 关掉 web 搜索（DeepSeek 搜索需要额外 key）。
+#    需要联网时改成 false，并配置 DEEPSEEK_API_KEY。
+- id: tool-web
+  config:
+    fetch: true
+- id: web-search-deepseek
+  disabled: !!js 'process.env.DEEPSEEK_API_KEY === undefined'

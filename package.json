@@ -1,0 +1,40 @@
+{
+  "name": "friday",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Friday：连接飞书与 DeepSeek Harness (DSH) 的工作助手。@Friday 派活，读群聊、文档和代码库，把结果贴回话题。",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "bin": {
+    "friday": "dist/index.js",
+    "friday-lark-mcp": "dist/mcp/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node --no-warnings=ExperimentalWarning dist/index.js",
+    "dev": "node --no-warnings=ExperimentalWarning --import tsx src/index.ts",
+    "doctor": "node --no-warnings=ExperimentalWarning dist/index.js --doctor"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "1.4.0",
+    "@larksuiteoapi/node-sdk": "^1.74.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@zip.js/zip.js": "2.17.0",
+    "axios": "^1.20.0",
+    "https-proxy-agent": "^7.0.6",
+    "yaml": "2.9.1",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,21 @@
+# systemd --user 单元：把 FRIDAY_DIR 改成实际路径后
+#   mkdir -p ~/.config/systemd/user && cp scripts/friday.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now friday
+#   journalctl --user -u friday -f
+# 开发机没有 loginctl enable-linger 的话，注销后服务会停；优先用 scripts/run.sh（tmux）。
+[Unit]
+Description=Friday - Feishu team agent on DeepSeek Harness
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/friday
+EnvironmentFile=%h/friday/.env
+ExecStart=/usr/bin/env node --no-warnings=ExperimentalWarning dist/index.js
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

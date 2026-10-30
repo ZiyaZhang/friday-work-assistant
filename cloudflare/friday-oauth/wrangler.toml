@@ -1,0 +1,18 @@
+name = "friday-oauth"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[observability]
+enabled = false
+
+# database_id 由 `wrangler d1 create friday-oauth` 生成后填进来。
+[[d1_databases]]
+binding = "DB"
+database_name = "friday-oauth"
+database_id = "<your-d1-database-id>"
+
+# RELAY_TOKEN 走 secret，不写在这个文件里：
+#   npx wrangler secret put RELAY_TOKEN

@@ -1,0 +1,42 @@
+# Dedicated router profile; use a separate DSH_HOME and empty workspace.
+# This removes model tools, not OS permissions. The host always supplies mcpServers: [].
+- id: sdk-app-startup
+  disabled: true
+- id: sdk-jsonrpc-server
+  disabled: true
+- id: persistent-bash
+  disabled: true
+- id: persistent-pwsh
+  disabled: true
+- id: mcp-resources
+  disabled: true
+
+- id: tools
+  config:
+    mode: native
+
+# This role chooses from a finite host-supplied contract. These are llm-deepseek
+# provider defaults (not ACP session options); leave worker reasoning unchanged.
+- id: llm-deepseek
+  config:
+    thinking: disabled
+    reasoningEffort: off
+    maxTokens: 1024
+
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: false
+    personaPrefix: >-
+      Classify the supplied message against the supplied task candidates.
+      Do not execute requests or call tools. Return only the requested JSON object.
+
+- insert:
+    - id: acp-app-startup
+      name: '@deepseek-ai/dsh-acp-app'
+    - id: acp
+      name: '@deepseek-ai/dsh-acp'
+      inject: [acpAppStartup]
+      config:
+        provider: !!js process.env.FRIDAY_ROUTER_MODEL_PROVIDER ?? 'deepseek-official'
+        model: !!js process.env.FRIDAY_ROUTER_MODEL ?? 'deepseek-flash'

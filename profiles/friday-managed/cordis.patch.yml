@@ -1,0 +1,32 @@
+# Model-visible capabilities come only from the host's per-Run MCP connection.
+# This removes native tool producers and automatic instructions, not OS permissions.
+- id: sdk-app-startup
+  disabled: true
+- id: sdk-jsonrpc-server
+  disabled: true
+- id: persistent-bash
+  disabled: true
+- id: persistent-pwsh
+  disabled: true
+- id: mcp-resources
+  disabled: true
+
+- id: tools
+  config:
+    mode: native
+
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: false
+    personaPrefix: Use the host-provided context and explicitly supplied MCP tools.
+
+- insert:
+    - id: acp-app-startup
+      name: '@deepseek-ai/dsh-acp-app'
+    - id: acp
+      name: '@deepseek-ai/dsh-acp'
+      inject: [acpAppStartup]
+      config:
+        provider: !!js process.env.FRIDAY_MANAGED_MODEL_PROVIDER
+        model: !!js process.env.FRIDAY_MANAGED_MODEL

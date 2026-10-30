@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+*.log
+.friday-data/
+
+# Local deployment state and credentials
+node_modules
+.env.*
+!.env.example
+*.pem
+*.key
+*.sqlite
+*.db-shm
+*.db-wal
+data/*.tsv
